@@ -100,7 +100,7 @@
 			// Check to see if the mobs are already being saved.
 			if(!QDELETED(current_mob) && ((current_mob.z in SSpersistence.saved_levels) || (get_area(current_mob) in SSpersistence.saved_areas)))
 				continue
-			one_off.AddToLimbo(char_mind, char_mind.unique_id, LIMBO_MIND, char_mind.persistent_id, char_mind.key, char_mind.current.real_name, FALSE)
+			one_off.AddToLimbo(char_mind, char_mind.unique_id, LIMBO_MIND, char_mind.key, char_mind.current.real_name, FALSE)
 		report_progress("Done adding player minds to limbo in [(REALTIMEOFDAY - time_start_limbo_minds) / (1 SECOND)]s.")
 		sleep(5)
 
@@ -203,7 +203,7 @@
 						if(!istype(T) || !T.contents || !length(T.contents))
 							continue
 						var/should_skip = TRUE
-						for(var/atom/A AS_ANYTHING in T.contents)
+						for(var/atom/A as anything in T.contents)
 							if(A.should_save())
 								should_skip = FALSE
 								break // We found a thing that's worth saving.
@@ -242,7 +242,7 @@
 					if(!istype(T) || !T.contents || !length(T.contents) || !T.should_save)
 						continue
 					var/should_skip = TRUE
-					for(var/atom/AM AS_ANYTHING in T.contents)
+					for(var/atom/AM as anything in T.contents)
 						if(AM.should_save())
 							should_skip = FALSE
 							break // We found a thing that's worth saving.
@@ -411,7 +411,7 @@
 		if(!establish_save_db_connection())
 			CRASH("SSPersistence: Couldn't establish DB connection while clearing wrapper queue!")
 		new_db_connection = TRUE
-	for(var/datum/wrapper/late/L AS_ANYTHING in late_wrappers)
+	for(var/datum/wrapper/late/L as anything in late_wrappers)
 		L.on_late_load()
 
 	late_wrappers.Cut()
