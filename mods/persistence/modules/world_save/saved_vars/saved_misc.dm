@@ -148,17 +148,6 @@ SAVED_VAR(/datum/memory, owner)
 SAVED_VAR(/datum/memory, _owner_name)
 SAVED_VAR(/datum/memory, _owner_ckey)
 
-SAVED_VAR(/datum/money_account, account_name)
-SAVED_VAR(/datum/money_account, owner_name)
-SAVED_VAR(/datum/money_account, account_id)
-SAVED_VAR(/datum/money_account, remote_access_pin)
-SAVED_VAR(/datum/money_account, money)
-SAVED_VAR(/datum/money_account, transaction_log)
-SAVED_VAR(/datum/money_account, suspended)
-SAVED_VAR(/datum/money_account, security_level)
-SAVED_VAR(/datum/money_account, account_type)
-SAVED_VAR(/datum/money_account, currency)
-
 SAVED_VAR(/datum/pipeline, air)
 
 SAVED_VAR(/datum/reagents/metabolism, metabolism_class)
@@ -211,13 +200,6 @@ SAVED_VAR(/datum/stored_items, item_path)
 SAVED_VAR(/datum/stored_items, amount)
 SAVED_VAR(/datum/stored_items, instances)
 SAVED_VAR(/datum/stored_items, storing_object)
-
-SAVED_VAR(/datum/transaction, purpose)
-SAVED_VAR(/datum/transaction, amount)
-SAVED_VAR(/datum/transaction, date)
-SAVED_VAR(/datum/transaction, time)
-SAVED_VAR(/datum/transaction, target)
-SAVED_VAR(/datum/transaction, source)
 
 SAVED_VAR(/datum/turbolift, current_floor)
 SAVED_VAR(/datum/turbolift, doors)
@@ -959,9 +941,11 @@ SAVED_VAR(/obj/effect/fusion_particle_catcher, mysize)
 
 SAVED_VAR(/obj/effect/fluid, last_flow_strength)
 SAVED_VAR(/obj/effect/fluid, last_flow_dir)
+SAVED_VAR(/obj/effect/fluid, reagents)
 
 SAVED_VAR(/obj/effect/effect/smoke/chem, splash_amount)
 SAVED_VAR(/obj/effect/effect/smoke/chem, destination)
+SAVED_VAR(/obj/effect/effect/smoke/chem, reagents)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Structures
@@ -1176,6 +1160,14 @@ SAVED_VAR(/obj/machinery/embedded_controller/radio/docking_port_multi, child_tag
 SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock/docking_port, display_name)
 
 SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock, cycle_to_external_air)
+SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock, tag_exterior_door)
+SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock, tag_interior_door)
+SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock, tag_airpump)
+SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock, tag_chamber_sensor)
+SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock, tag_exterior_sensor)
+SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock, tag_interior_sensor)
+SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock, tag_secure)
+SAVED_VAR(/obj/machinery/embedded_controller/radio/airlock, tag_air_alarm)
 
 SAVED_VAR(/obj/machinery/light_switch, on)
 
