@@ -120,7 +120,7 @@
 	base_type = /obj/machinery/airlock_sensor/buildable
 	construct_state = /decl/machine_construction/wall_frame/panel_closed/simple
 	frame_type = /obj/item/frame/button/airlock_controller_config/airlock_sensor
-	directional_offset = "{'NORTH':{'y':-20}, 'SOUTH':{'y':24}, 'EAST':{'x':-22}, 'WEST':{'x':22}}"
+	directional_offset = "{'NORTH':{'y':-18}, 'SOUTH':{'y':24}, 'EAST':{'x':-22}, 'WEST':{'x':22}}"
 	var/alert = FALSE
 	var/master_cycling = FALSE
 	var/pressure
@@ -165,7 +165,9 @@
 		var/datum/gas_mixture/air_sample = return_air()
 		var/new_pressure = round(air_sample.return_pressure(),0.1)
 
-		if(abs(pressure - new_pressure) > 0.001 || pressure == null)
+		//Try preventing the sensor from spamming when there's no differences, and the controller isn't cycling.
+		//Can't rely only on difference, since it's possible for the pressure to stay nearly the same for a few calls, which prevents the machine var from updating
+		if(abs(pressure - new_pressure) > 0.001 || master_cycling)
 			var/decl/public_access/public_variable/airlock_pressure/pressure_var = GET_DECL(/decl/public_access/public_variable/airlock_pressure)
 			pressure_var.write_var(src, new_pressure)
 
