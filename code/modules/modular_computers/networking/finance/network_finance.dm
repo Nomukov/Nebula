@@ -73,3 +73,22 @@
 		return
 
 	return target_account.money_account
+
+// Returns an unsorted list of accounts which own contracts.
+/datum/computer_network/proc/get_contract_owners(accesses)
+	var/list/result = list()
+	for(var/datum/extension/network_device/mainframe/M in get_mainframes_by_role(MF_ROLE_ACCOUNT_SERVER, accesses))
+		for(var/datum/computer_file/data/account/E in M.get_all_files())
+			if(E.backup)
+				continue
+			if(LAZYLEN(E.owned_contracts))
+				result |= E
+	return result
+
+// Process periodic financial events from contracts.
+/datum/computer_network/proc/process_contracts()
+	var/list/all_accounts = get_contract_owners()
+
+	for(var/datum/computer_file/data/account/contract_owner as anything in all_accounts)
+		for(var/datum/network_contract/contract in contract_owner.owned_contracts)
+			contract.process_contracts(src)

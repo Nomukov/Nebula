@@ -2,18 +2,38 @@
 	{{:helper.link("NETWORK SETTINGS", null, { "settings" : 1 })}}
 </div>
 <hr>
-<div class="item">
-	<div class="itemLabel">Login:</div>
-	<div class='itemBody'>
-		{{:helper.link(data.login, null, { "change_login" : 1 })}}
+{{if data.logged_in}}
+	<h2>Logged in as {{:data.logged_in}}</h2>
+	{{if data.job_title}}
+		<div class="item">
+			<div class="itemLabel">Clock In:</div>
+				<div class='itemBody'>
+					{{:helper.link('Clocked in as ' + data.job_title, 'cancel', { "clock_out" : 1 })}}
+				</div>
+			</div>
+		</div>
+	{{else}}
+		<div class="item">
+			{{:helper.link('Clock in', null, { "clock_in" : 1 })}}
+		</div>
+	{{/if}}
+	<div class="item">
+		{{:helper.link('Log out', null, { "log_out" : 1 })}}
 	</div>
-</div>
-<div class="item">
-	<div class="itemLabel">Password:</div>
-	<div class='itemBody'>
-		{{:helper.link(data.password, null, { "change_password" : 1 })}}
+{{else}}
+	<div class="item">
+		<div class="itemLabel">Login:</div>
+		<div class='itemBody'>
+			{{:helper.link(data.login, null, { "change_login" : 1 })}}
+		</div>
 	</div>
-</div>
-<div class="item">
-		{{:helper.link('Login', null, { "login_account" : 1 })}}
-</div>
+	<div class="item">
+		<div class="itemLabel">Password:</div>
+		<div class='itemBody'>
+			{{:helper.link(data.password, null, { "change_password" : 1 })}}
+		</div>
+	</div>
+	<div class="item">
+			{{:helper.link('Login', null, { "login_account" : 1 })}}
+	</div>
+{{/if}}

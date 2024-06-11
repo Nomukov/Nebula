@@ -11,10 +11,13 @@
 {{else data.prog_state == 0}} <!--Menu-->
 	<h2>Welcome to the network account management utility:</h2>
 	{{:helper.link('Self account management', null, {'self_mode' : 1}, null)}}
+	{{:helper.link('Contract management', null, {'contract_mode' : 1}, null)}}
 	{{:helper.link('Manage other accounts', null, {'other_mode' : 1}, null)}}
 {{else data.prog_state == 1}}<!--Self management-->
 	<h2>Welcome, {{:data.account_fullname}}</h2>
-	<div class='item'>		
+	<hr>
+	<h3>Personal Information</h3>
+	<div class='item'>
 		<div class='itemLabel'>
 			Login:
 		</div>
@@ -22,13 +25,16 @@
 			{{:data.account_name}}
 		</div>
 	</div>
-	<div class='item'>		
+	<div class='item'>
 		<div class='itemLabel'>
 			Password:
 		</div>
 		<div class='itemContent'>
 			{{:helper.link('*******', null, {'change_password' : 1}, null)}}
 		</div>
+	</div>
+	<div class='item'>
+		{{:helper.link('Change name', null, {'change_fullname' : 1}, null)}}
 	</div>
 	<div class="statusDisplay" style="min-height: 120px;">
 		<div class="item">
@@ -42,9 +48,376 @@
 			</div>
 		</div>
 	</div>
-	{{:helper.link('Change name', null, {'change_fullname' : 1}, null)}}
+	<hr>
+	<h3>Financial Routing</h3>
+	<i>Financial routing may be used to route payments made to this account to another accessible on the network or over PLEXUS.</i>
+	<div class='item'>
+		<div class='itemLabel'>
+			Routing Login:
+		</div>
+		<div class='itemContent'>
+			{{:helper.link(data.routing_login, null, {'change_routing_login' : 1}, null)}}
+		</div>
+	</div>
+	<div class='item'>
+		<div class='itemLabel'>
+			Routing Network:
+		</div>
+		<div class='itemContent'>
+			{{:helper.link(data.routing_network, null, {'change_routing_network' : 1}, null)}}
+		</div>
+	</div>
+	<div class='item'>
+		<div class='itemLabel'>
+			Routing PIN:
+		</div>
+		<div class='itemContent'>
+			{{:helper.link(data.routing_pin, null, {'change_routing_pin' : 1}, null)}}
+		</div>
+	</div>
+	<hr>
 	{{:helper.link('Go back', 'arrowthickstop-1-w', {'back' : 1}, null)}}
-{{else data.prog_state == 2}}<!--Other Management-->
+{{else data.prog_state == 2}}<!--Contract Management-->
+	{{if data.contract_name}}
+		{{if data.contract_finalized}}
+			{{if data.offering}}
+				<h2>Select to account to offer '{{:data.contract_name}}'</h2>
+				<hr>
+				<table style="width:100%">
+				<tr><td style="width:40%">Account Login<th>Real Name
+				{{for data.offering_list}}
+					<tr class="candystripe">
+					<td>{{:helper.link(value.account, '', {'offer_contract' : value.account})}}
+					<td>{{:value.fullname}}
+				{{/for}}
+				</table>
+			{{else}}
+				<div class='item'>
+					<div class='itemLabel'>
+						Contract Name:
+					</div>
+					<div class='itemContent'>
+						{{:data.contract_name}}
+					</div>
+				</div>
+				{{if data.contract_groups}}
+					<h2>Contract Groups</h2>
+					<i>The holder of the contract will be granted membership in these groups</i>
+						<table style="width:20%">
+							<tr><th>Group
+							{{for data.contract_groups}}
+								<tr class="candystripe">
+									<td>{{:value}}
+								</tr>
+							{{/for}}
+						</table>
+					<hr>
+				{{/if}}
+				<!--Jobs-->
+				{{if data.contract_title}}
+					<h2>Contract Job</h2>
+					<div class='item'>
+						<div class='itemLabel'>
+							Job Title:
+						</div>
+						<div class='itemContent'>
+							{{:data.contract_title}}
+						</div>
+					</div>
+					<div class='item'>
+						<div class='itemLabel'>
+							Hourly Pay:
+						</div>
+						<div class='itemContent'>
+							{{:data.contract_hourly}}
+						</div>
+					</div>
+					<div class='item'>
+						<div class='itemLabel'>
+							Require Clock-in for Group membership:
+						</div>
+						<div class='itemContent'>
+							{{:data.req_clockin ? 'Yes' : 'No'}}
+						</div>
+					</div>
+				<hr>
+				{{/if}}
+				<!--Regular Pay-->
+				{{if data.contract_pay}}
+					<h2>Contract Pay</h2>
+					<div class='item'>
+						<div class='itemLabel'>
+							Pay Period:
+						</div>
+						<div class='itemContent'>
+							{{:data.contract_period}}
+						</div>
+					</div>
+					<div class='item'>
+						<div class='itemLabel'>
+							Regular Pay:
+						</div>
+						<div class='itemContent'>
+							{{:data.contract_pay}}
+						</div>
+					</div>
+					<div class='item'>
+						{{:data.contract_reversed}}
+					</div>
+				<hr>
+				{{/if}}
+				<!--Contract Authorizations-->
+				{{if data.contract_auths}}
+					<div class='item'>
+						<h2>Contract Authorizations</h2>
+						<div class='itemContent'>
+							<table style="width:20%">
+								<tr><th>Contract
+								{{for data.contract_auths}}
+									<tr class="candystripe">
+										<td>{{:value.name}}
+									</tr>
+								{{/for}}
+							</table>
+							<br>
+							<i>The holder of the contract will be allowed to grant and cancel these contracts, but not modify them.</i>
+						</div>
+					</div>
+					<hr>
+				{{/if}}
+				{{if data.pending_modifications}}
+					<h2>Pending Modifications</h2>
+					<div class='item'>
+						<div class='itemContent'>
+							<table style="width:20%">
+								<tr><th>Contract<th>Action</th>
+								{{for data.pending_modifications}}
+									<tr class="candystripe">
+										<td>{{:value.name}}
+										<td>{{:helper.link('-', null, {'remove_modification' : value.mod_index}, null)}}
+									</tr>
+								{{/for}}
+								<tr>
+									<td>
+									<td>{{:helper.link('+', null, {'modify_contract' : 1}, null)}}
+								</tr>
+							</table>
+						</div>
+					</div>
+					<div class='item'>
+						<div class='itemContent'>
+							{{:helper.link('Preview Modifications', null, {'preview_modifications' : 1}, null)}}
+							{{:helper.link('Activate Modifications', null, {'activate_modifications' : 1}, null)}}
+						</div>
+					</div>
+					<hr>
+				{{/if}}
+				<h2>Contract Actions</h2>
+				<div class='item'>
+					<div class='itemContent'>
+						{{:helper.link('View Contract', null, {'preview_contract' : 1}, null)}}
+						{{:helper.link('Offer Contract', null, {'toggle_offer' : 1}, null)}}
+						{{if data.is_owner}}
+							{{if !data.pending_modifications}}
+								{{:helper.link('Modify Contract', null, {'modify_contract' : 1}, null)}}
+							{{/if}}
+							{{:helper.link('Delete Contract', null, {'delete_contract' : 1}, null)}}
+						{{/if}}
+					</div>
+				</div>
+				<h2>Active Instances</h2>
+				{{if data.active_contracts}}
+					<table style="width:100%">
+						<tr><td style="width:40%">Holder<th>Next Payment<th>Action
+						{{for data.active_contracts}}
+							<tr class="candystripe">
+								<td>{{:value.holder}}
+								<td>{{:value.next_pay}}
+								<td>{{:helper.link('Cancel', '', {'cancel_contract' : value.active_index})}}
+							</tr>
+						{{/for}}
+					</table>
+				{{else}}
+					<i>No active instances!</i>
+				{{/if}}
+			{{/if}}
+		{{else}}
+			<h2>Contract Info</h2>
+			<div class='item'>
+				<div class='itemLabel'>
+					Contract Name:
+				</div>
+				<div class='itemContent'>
+					{{:helper.link(data.contract_name, null, {'set_name' : 1}, null)}}
+				</div>
+			</div>
+			<hr>
+			<h2>Contract Job</h2>
+			<i>Adding a job will pay the contract holder a set amount hourly while clocked-in, and grant them a job title.</i>
+			{{if data.contract_title}}
+				<div class='item'>
+					<div class='itemLabel'>
+						Job Title:
+					</div>
+					<div class='itemContent'>
+						{{:helper.link(data.contract_title, null, {'set_job_title' : 1}, null)}}
+					</div>
+				</div>
+				<div class='item'>
+					<div class='itemLabel'>
+						Hourly Pay:
+					</div>
+					<div class='itemContent'>
+						{{:helper.link(data.contract_hourly, null, {'set_hourly_pay' : 1}, null)}}
+					</div>
+				</div>
+				<div class='item'>
+					<div class='itemLabel'>
+						Require Clock-in for Group membership:
+					</div>
+					<div class='itemContent'>
+						{{:helper.link(data.req_clockin ? 'Yes' : 'No', null, {'toggle_clockin' : 1}, null)}}
+					</div>
+				</div>
+				<div class='item'>
+					{{:helper.link('Remove Job', null, {'reset_job' : 1}, null)}}
+				</div>
+			{{else}}
+				<div class='item'>
+					{{:helper.link('Create Job', null, {'set_job_title' : 1}, null)}}
+				</div>
+			{{/if}}
+			<hr>
+			<h2>Regular Pay</h2>
+			<i>Add a regular pay to perform periodic transactions between the contract owner and holder.</i>
+			{{if data.contract_period}}
+				<div class='item'>
+					<div class='itemLabel'>
+						Pay Period:
+					</div>
+					<div class='itemContent'>
+						{{:helper.link(data.contract_period, null, {'set_pay_period' : 1}, null)}}
+					</div>
+				</div>
+				<div class='item'>
+					<div class='itemLabel'>
+						Regular Pay:
+					</div>
+					<div class='itemContent'>
+						{{:helper.link(data.contract_pay, null, {'set_regular_pay' : 1}, null)}}
+					</div>
+				</div>
+				<div class='item'>
+					<div class="itemLabel">
+						Payment Type:
+					</div>
+					<div>
+						{{:helper.link(data.contract_reversed, null, {'toggle_reverse_pay' : 1}, null)}}
+					</div>
+				</div>
+				<div class='item'>
+					{{:helper.link('Remove regular pay', null, {'reset_regular_pay' : 1}, null)}}
+				</div>
+			{{else}}
+				<div class='item'>
+					{{:helper.link('Add regular pay', null, {'set_pay_period' : 1}, null)}}
+				</div>
+			{{/if}}
+			<hr>
+			<h2>Contract Groups</h2>
+			<i>The holder of the contract will be granted membership in these groups</i>
+			<table style="width:80%">
+				<tr><th>Group<th style="width:10%">Action
+				{{for data.contract_groups}}
+					<tr class="candystripe">
+						<td>{{:value}}<td>{{:helper.link('-', '', {'remove_group' : value})}}
+					</tr>
+				{{/for}}
+				<tr><td></td><td>{{:helper.link('+', '', {'add_group' : 1})}}
+			</table>
+			<hr>
+			<h2>Contract Authorization</h2>
+			<i>The holder of the contract will be allowed to grant and cancel these contracts, but not modify them.</i>
+			<table style="width:80%">
+				<tr><th>Contract<th style="width:10%">Action
+				{{for data.contract_auths}}
+					<tr class="candystripe">
+						<td>{{:value.name}}<td>{{:helper.link('-', '', {'remove_auth' : value.auth_index})}}
+					</tr>
+				{{/for}}
+				<tr><td></td><td>{{:helper.link('+', '', {'add_auth' : 1})}}
+			</table>
+			<hr>
+			<div class='item'>
+				<div class='itemLabel'>
+					Additional Clauses:
+				</div>
+				<div class='itemContent'>
+					{{:helper.link('Edit', null, {'modify_additional_clauses' : 1}, null)}}
+				</div>
+			</div>
+			<hr>
+			<div class='item'>
+				<div class='itemLabel'>
+					Finalization:
+				</div>
+				<div class='itemContent'>
+					{{:helper.link('Preview', null, {'preview_contract' : 1}, null)}}{{:helper.link('Finalize', null, {'finalize_contract' : 1}, null)}}
+				</div>
+			</div>
+		{{/if}}
+	{{else}}
+		<h2>Held Contracts</h2>
+		<i>These are contracts you are party to</i>
+		<table style="width:100%">
+			<tr><td style="width:40%">Contract<th>Job Title<th>Hourly Pay<th>Regular Pay<th>Next Payment<th>View<th>Cancel
+			{{for data.held_contracts}}
+				<tr class="candystripe">
+					<td>{{:value.name}}
+					<td>{{:value.title}}
+					<td>{{:value.hourly_pay}}
+					<td>{{:value.regular_pay}}
+					<td>{{:value.next_pay}}
+					<td>{{:helper.link('View', '', {'view_held_contract' : value.held_index})}}
+					<td>{{:helper.link('Cancel', '', {'cancel_held_contract' : value.held_index})}}
+				</tr>
+			{{/for}}
+		</table>
+		{{if data.pending_contracts}}
+			<h2>Pending Contracts</h2>
+			<i>These are contracts you have been offered</i>
+			<table style="width:100%">
+				<tr><td style="width:40%">Contract<th>Accept<th>View
+				{{for data.pending_contracts}}
+					<tr class="candystripe">
+						<td>{{:value.name}}
+						<td>{{:helper.link('Accept', '', {'accept_pending_contract' : value.pending_index})}}
+						<td>{{:helper.link('View', '', {'view_pending_contract' : value.pending_index})}}
+					</tr>
+				{{/for}}
+			</table>
+		{{/if}}
+		<hr>
+		<h2>Authorized Contracts</h2>
+		<i>These are contracts you are permitted to manage, and may be party to.</i>
+		<table style="width:100%">
+			<tr><td style="width:40%">Contract<th>Job Title<th>Hourly Pay<th>Regular Pay<th>Payment Period<th>No. Active
+			{{for data.auth_contracts}}
+				<tr class="candystripe">
+					<td>{{:helper.link(value.name, '', {'select_contract' : value.auth_index})}}
+					<td>{{:value.title}}
+					<td>{{:value.hourly_pay}}
+					<td>{{:value.regular_pay}}
+					<td>{{:value.pay_period}}
+					<td>{{:value.no_active}}
+				</tr>
+			{{/for}}
+			<tr><td>{{:helper.link('Create Contract', null, {'create_contract' : 1}, null)}}</td></tr>
+		</table>
+	{{/if}}
+	<hr>
+	{{:helper.link('Go back', 'arrowthickstop-1-w', {'back' : 1}, null)}}
+{{else data.prog_state == 3}}<!--Other Management-->
 	{{if data.accounts}}
 		<h2>Network Accounts:</h2>
 		<h3>Some accounts may not be visible depending on your access to account servers.</h3>

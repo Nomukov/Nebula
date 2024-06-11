@@ -1,7 +1,6 @@
 // An account which temporarily holds money ejected from elsewhere.
 /datum/money_account/escrow
 
-
 /datum/money_account/escrow/Destroy(force)
 	SSmoney_accounts.all_escrow_accounts -= src
 	. = ..()

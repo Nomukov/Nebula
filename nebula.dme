@@ -2762,6 +2762,7 @@
 #include "code\modules\modular_computers\networking\network_helper.dm"
 #include "code\modules\modular_computers\networking\accounts\_network_accounts.dm"
 #include "code\modules\modular_computers\networking\accounts\account.dm"
+#include "code\modules\modular_computers\networking\accounts\contract.dm"
 #include "code\modules\modular_computers\networking\accounts\id_card.dm"
 #include "code\modules\modular_computers\networking\device_types\_network_device.dm"
 #include "code\modules\modular_computers\networking\device_types\acl.dm"

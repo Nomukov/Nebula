@@ -29,6 +29,9 @@
 	received_copy.set_timestamp()
 	recipient.inbox.Add(received_copy)
 
+	if(!received_copy.source)
+		received_copy.source = "[sender_address]"
+
 	for(var/weakref/os_ref in recipient.logged_in_os)
 		var/datum/extension/interactive/os/os = os_ref.resolve()
 		if(istype(os))

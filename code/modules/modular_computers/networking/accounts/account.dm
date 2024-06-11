@@ -24,7 +24,20 @@
 	var/notification_sound = "*beep*"
 	var/backup = FALSE // Backups are not returned when searching for accounts, but can be recovered using the accounts program.
 
+	// Finances
 	var/datum/money_account/child/network/money_account
+
+	var/routing_login
+	var/routing_network
+	var/routing_pin
+
+	var/list/datum/network_contract/owned_contracts
+	var/list/datum/contract_instance/held_contracts
+
+	var/list/pending_contracts
+
+	// Reference to the contract instance currently clocked in as
+	var/weakref/clocked_in
 
 	copy_string = "(Backup)"
 
@@ -64,6 +77,8 @@
 	QDEL_NULL_LIST(outbox)
 	QDEL_NULL_LIST(spam)
 	QDEL_NULL_LIST(deleted)
+
+	QDEL_NULL_LIST(owned_contracts)
 	. = ..()
 
 /datum/computer_file/data/account/proc/all_emails()
@@ -81,6 +96,122 @@
 			os.mail_received(received_message)
 		else
 			logged_in_os -= os_ref
+
+// Returns a financial account able to accept/send payments from this network account.
+/datum/computer_file/data/account/proc/get_financial_account(datum/computer_network/searching)
+	// Prioritize the routed account.
+	if(routing_login && routing_network)
+		var/datum/money_account/routed = searching?.get_financial_account(routing_login, routing_network)
+		if(istype(routed))
+			if(routed.security_level < 1 || (routed.remote_access_pin == routing_pin))
+				return routed
+
+	return money_account
+
+// Returns contracts the account is allowed to grant/revoke, but not necessarily modify
+/datum/computer_file/data/account/proc/get_authorized_contracts()
+	. = list()
+	if(LAZYLEN(owned_contracts))
+		. += owned_contracts
+
+	if(LAZYLEN(held_contracts))
+		for(var/datum/contract_instance/instance in held_contracts)
+			var/datum/network_contract/parent = instance.parent
+			. |= parent.get_authorized_contracts()
+
+// Returns the contract instances the account is party to
+// TODO: Remove or add check for validity if necessary.
+/datum/computer_file/data/account/proc/get_held_contracts()
+	. = list()
+	for(var/datum/contract_instance/instance in held_contracts)
+		. += instance
+
+/datum/computer_file/data/account/proc/get_held_contract_parents()
+	. = list()
+	for(var/datum/contract_instance/instance in held_contracts)
+		. += instance.parent
+
+/datum/computer_file/data/account/proc/get_pending_contracts()
+	. = list()
+	for(var/list/pending_tuple in pending_contracts)
+		var/weakref/pending_ref = pending_tuple[1]
+		var/datum/network_contract/pending = pending_ref.resolve()
+		if(!istype(pending))
+			LAZYREMOVE(pending_contracts, list(pending_tuple))
+			continue
+		. += pending
+
+/datum/computer_file/data/account/proc/clock_in(datum/contract_instance/instance)
+	if(clocked_in)
+		var/datum/contract_instance/clock_instance = clocked_in.resolve()
+		if(istype(clock_instance))
+			clock_instance.clock_out()
+		clocked_in = null
+
+	instance.clock_in()
+	clocked_in = weakref(instance)
+
+/datum/computer_file/data/account/proc/clock_out()
+	if(clocked_in)
+		var/datum/contract_instance/instance = clocked_in.resolve()
+		if(istype(instance))
+			instance.clock_out()
+
+	clocked_in = null
+
+/datum/computer_file/data/account/proc/get_active_job_title()
+	if(!clocked_in)
+		return
+
+	var/datum/contract_instance/instance = clocked_in.resolve()
+	if(!istype(instance))
+		clock_out()
+		return
+	return instance.parent?.job_title
+
+/datum/computer_file/data/account/proc/get_access(datum/computer_network/network, ignore_contracts = FALSE)
+	if(!istype(network) || !(src in network.get_accounts_unsorted()))
+		return
+	. = list()
+	var/location = "[network.network_id]"
+	. += "[login]@[location]" // User access uses '@'
+	for(var/group in groups)
+		. |= "[group].[location]"	// Group access uses '.'
+	for(var/group in parent_groups) // Membership in a child group grants access to anything with an access requirement set to the parent group.
+		. |= "[group].[location]"
+
+	// Check for access granted via contract.
+	if(ignore_contracts)
+		return
+	for(var/datum/contract_instance/instance in get_held_contracts())
+		var/datum/network_contract/parent = instance.parent
+		if(!parent || !length(parent.groups))
+			continue
+
+		if(parent.require_clockin && (clocked_in != weakref(instance)))
+			continue
+
+		for(var/group in parent.get_granted_groups(network))
+			. |= "[group].[location]"
+
+// Gets the groups this account is authorized to grant by owner contract or manual assignment.
+/datum/computer_file/data/account/proc/get_authorized_groups(datum/computer_network/network)
+	. = list()
+	var/datum/extension/network_device/acl/net_acl = network.access_controller
+	if(!net_acl)
+		return
+
+	// Unfortunately, we must ignore contracts to avoid infinite loops.
+	if(net_acl.has_access(get_access(network, ignore_contracts = TRUE)))
+		return net_acl.get_all_groups()
+
+	if(net_acl.allow_submanagement)
+		var/list/group_dict = net_acl.get_group_dict()
+		for(var/parent_group in group_dict)
+			var/list/child_groups = group_dict[parent_group]
+			if(length(child_groups))
+				if(parent_group in groups)
+					. |= child_groups
 
 /datum/computer_file/data/account/Clone(rename)
 	. = ..(TRUE) // We always rename the file since a copied account is always a backup.

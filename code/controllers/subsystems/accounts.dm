@@ -10,6 +10,7 @@ SUBSYSTEM_DEF(money_accounts)
 	var/list/datum/money_account/escrow/all_escrow_accounts = list()
 
 	var/list/processing_accounts
+	var/list/processing_networks
 
 	var/adjustment = 0
 
@@ -17,8 +18,9 @@ SUBSYSTEM_DEF(money_accounts)
 
 	if(!resumed)
 		processing_accounts = all_accounts.Copy()
+		processing_networks = SSnetworking.networks.Copy()
 
-	var/current_time = REALTIMEOFDAY + adjustment
+	var/current_time = world.realtime + adjustment
 	while(processing_accounts.len)
 		var/datum/money_account/curr_account = processing_accounts[processing_accounts.len]
 		processing_accounts.len--
@@ -42,11 +44,30 @@ SUBSYSTEM_DEF(money_accounts)
 		if(MC_TICK_CHECK)
 			return
 
+	while(processing_networks.len)
+		var/network_id = processing_networks[processing_networks.len]
+		var/datum/computer_network/processing_network = processing_networks[network_id]
+		processing_networks.len--
+
+		processing_network.process_contracts()
+
+		if(MC_TICK_CHECK)
+			return
+
 /datum/controller/subsystem/money_accounts/proc/accel_day()
 	adjustment += 1 DAY
 
 /datum/controller/subsystem/money_accounts/proc/decel_day()
 	adjustment -= 1 DAY
+
+/datum/controller/subsystem/money_accounts/proc/accel_week()
+	adjustment += 7 DAYS
+
+/datum/controller/subsystem/money_accounts/proc/decel_week()
+	adjustment -= 7 DAYS
+
+/datum/controller/subsystem/money_accounts/proc/get_current_time()
+	return world.realtime + adjustment
 
 /datum/controller/subsystem/money_accounts/proc/get_or_add_escrow(account_id, account_pin, account_provider)
 	var/datum/money_account/escrow/existing = get_escrow(account_id, account_pin, account_provider)

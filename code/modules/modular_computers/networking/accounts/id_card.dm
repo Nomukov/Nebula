@@ -21,12 +21,7 @@
 	if(network)
 		var/list/net_access = list()
 		if(access_account && access_account.login != ignore_account)
-			var/location = "[network.network_id]"
-			net_access += "[access_account.login]@[location]" // User access uses '@'
-			for(var/group in access_account.groups)
-				net_access += "[group].[location]"	// Group access uses '.'
-			for(var/group in access_account.parent_groups) // Membership in a child group grants access to anything with an access requirement set to the parent group.
-				net_access += "[group].[location]"
+			net_access = access_account.get_access(network)
 
 		. += net_access
 		cached_network_access = net_access
@@ -37,7 +32,7 @@
 		cached_network_access.Cut()
 		visible_message(SPAN_SUBTLE("\The [src] beeps, indicating that it cleared its cached access."), range = 1)
 
-/obj/item/card/id/network/proc/resolve_account(net_feature = NET_FEATURE_ACCESS)
+/obj/item/card/id/network/proc/resolve_account(net_feature = NET_FEATURE_ACCESS, update_title = TRUE)
 	if(!current_account)
 		return
 	var/datum/extension/network_device/D = get_extension(src, /datum/extension/network_device)
@@ -60,6 +55,8 @@
 
 	if(error)
 		current_account = null
+		if(update_title)
+			update_title()
 		visible_message(SPAN_WARNING("\The [src] flashes an error: \'[error]!\'"), null, null,1)
 	else
 		return check_account
@@ -74,6 +71,14 @@
 
 	data["login"] = login ? login : "Enter Login"
 	data["password"] = password ? stars(password, 0) : "Enter Password"
+
+	var/datum/computer_file/data/account/logged_in = resolve_account()
+	if(logged_in)
+		data["logged_in"] = logged_in.login
+		var/datum/contract_instance/clocked_in = logged_in.clocked_in?.resolve()
+		if(istype(clocked_in))
+			data["job_title"] = assignment
+
 	ui = SSnano.try_update_ui(user, src, ui_key, ui, data)
 	if (!ui)
 		ui = new(user, src, ui_key, "network_id.tmpl", "Network ID Settings", 540, 326)
@@ -87,6 +92,8 @@
 	var/login  = associated_network_account["login"]
 	var/password = associated_network_account["password"]
 	if(href_list["change_login"])
+		if(current_account)
+			return TOPIC_REFRESH
 		var/new_login = sanitize(input(usr, "Enter your account login:", "Account login", login) as text|null)
 		if(new_login == login || !CanInteract(usr, DefaultTopicState()))
 			return TOPIC_NOACTION
@@ -97,6 +104,8 @@
 		return TOPIC_REFRESH
 
 	if(href_list["change_password"])
+		if(current_account)
+			return TOPIC_REFRESH
 		var/new_password = sanitize(input(usr, "Enter your account password:", "Account password") as text|null)
 		if(new_password == password || !CanInteract(usr, DefaultTopicState()))
 			return TOPIC_NOACTION
@@ -106,10 +115,63 @@
 		return TOPIC_REFRESH
 
 	if(href_list["login_account"])
+		if(current_account)
+			return TOPIC_REFRESH
 		if(login_account())
 			to_chat(usr, SPAN_NOTICE("Account successfully logged in."))
 		else
 			to_chat(usr, SPAN_WARNING("Could not login to account. Check password or network connectivity."))
+		return TOPIC_REFRESH
+
+	if(href_list["clock_in"])
+		var/datum/computer_file/data/account/logged_in = resolve_account()
+		if(!logged_in)
+			return TOPIC_REFRESH
+
+		if(logged_in.clocked_in)
+			return TOPIC_REFRESH
+
+		var/list/job_titles = list()
+		var/list/contract_dict = list()
+		for(var/datum/contract_instance/instance in logged_in.get_held_contracts())
+			if(instance.parent.job_title)
+				var/title = "[instance.parent.job_title] ([instance.parent.name])"
+
+				// In case of duplicate job titles
+				while(title in job_titles)
+					title = "[title]*"
+
+				job_titles += title
+				contract_dict[title] = instance
+
+		if(!length(job_titles))
+			to_chat(usr, SPAN_WARNING("You have no jobs available!"))
+			return TOPIC_HANDLED
+
+		var/job_title = input(usr, "Select the job to clock into:", "Clocking in") as null|anything in job_titles
+
+		var/datum/contract_instance/clocked_in = contract_dict[job_title]
+
+		if(!clocked_in || !(clocked_in in logged_in.get_held_contracts()))
+			return TOPIC_REFRESH
+
+		logged_in.clock_in(clocked_in)
+		update_title()
+
+		to_chat(usr, SPAN_NOTICE("You clock in as \a [assignment]."))
+		return TOPIC_REFRESH
+
+	if(href_list["clock_out"])
+		if(clock_out())
+			to_chat(usr, SPAN_NOTICE("You clock out."))
+			update_title()
+		return TOPIC_REFRESH
+
+	if(href_list["log_out"])
+		clock_out()
+		current_account = null
+		update_title()
+		cached_network_access.Cut()
 		return TOPIC_REFRESH
 
 	if(href_list["settings"])
@@ -128,15 +190,47 @@
 	for(var/datum/computer_file/data/account/check_account in network.get_accounts())
 		if(check_account.login == login && check_account.password == password)
 			current_account = weakref(check_account)
-			return TRUE
+			update_title()
+			. = TRUE
 
 	// Cache the access post login.
 	GetAccess()
+
+/obj/item/card/id/network/proc/clock_out()
+	var/datum/computer_file/data/account/logged_in = resolve_account()
+	if(!logged_in)
+		return FALSE
+	var/datum/contract_instance/clocked_in = logged_in.clocked_in?.resolve()
+	if(istype(clocked_in))
+		logged_in.clock_out()
+		return TRUE
 
 /obj/item/card/id/network/proc/get_network_id()
 	var/datum/extension/network_device/D = get_extension(src, /datum/extension/network_device)
 	var/datum/computer_network/network = D?.get_network()
 	return network?.network_id
+
+/obj/item/card/id/network/proc/update_clock_in(datum/contract_instance/instance, datum/computer_file/data/account/holder)
+	if(resolve_account(NET_FEATURE_ACCESS) != holder)
+		return FALSE
+
+	var/mob/carrier = get_recursive_loc_of_type(/mob)
+
+	// The contract instance handles the actual clocking out, in case there are multiple IDs with the holder account.
+	if(!carrier || !carrier.client || carrier.client.is_afk())
+		visible_message("\The [src] flashes a red light, indicating it clocked-out due to inactivity.")
+		return FALSE
+
+	return TRUE
+
+// Updates the job title from the currently clocked in contract on the account.
+/obj/item/card/id/network/proc/update_title()
+	var/datum/computer_file/data/account/current = resolve_account(update_title = FALSE)
+	if(!istype(current))
+		assignment = null
+		return
+
+	assignment = current.get_active_job_title()
 
 /obj/item/card/id/network/verb/flash_id()
 	set name = "Flash ID"

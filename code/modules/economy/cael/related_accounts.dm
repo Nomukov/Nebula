@@ -63,8 +63,8 @@
 	interest_rate = n_interest
 	withdrawal_limit = n_withdrawal_limit
 	transaction_fee = n_transaction_fee
-	last_withdraw_period = REALTIMEOFDAY
-	last_interest_period = REALTIMEOFDAY
+	last_withdraw_period = world.realtime
+	last_interest_period = world.realtime
 	. = ..()
 
 /datum/money_account/child/Destroy(force)

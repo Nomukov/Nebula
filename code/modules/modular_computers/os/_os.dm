@@ -65,12 +65,7 @@
 	if(access_account)
 		var/datum/computer_network/network = get_network()
 		if(network)
-			var/location = "[network.network_id]"
-			. += "[access_account.login]@[location]" // User access uses '@'
-			for(var/group in access_account.groups)
-				. += "[group].[location]"	// Group access uses '.'
-			for(var/group in access_account.parent_groups) // Membership in a child group grants access to anything with an access requirement set to the parent group.
-				. += "[group].[location]"
+			. += access_account.get_access(network)
 	if(user)
 		var/obj/item/card/id/I = user.GetIdCard()
 		if(I)

@@ -10,7 +10,7 @@
 	var/allow_cancel = TRUE // Whether or not a modification can be cancelled prior to activation.
 
 /datum/account_modification/New(n_affecting)
-	start_time = REALTIMEOFDAY
+	start_time = world.realtime
 	affecting = n_affecting
 	. = ..()
 
@@ -39,7 +39,7 @@
 /datum/account_modification/proc/get_short_desc()
 
 /datum/account_modification/proc/get_readable_countdown()
-	return minutes_to_readable((start_time + mod_delay - REALTIMEOFDAY)/(1 MINUTES))
+	return minutes_to_readable((start_time + mod_delay - world.realtime)/(1 MINUTES))
 
 /datum/account_modification/modify_interest
 	name = "Interest rate modification"
